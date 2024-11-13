@@ -1,8 +1,44 @@
-import { handleStatus, log, delay } from "./utils/promise-helpers.js";
+import { handleStatus, log, retry } from "./utils/promise-helpers.js";
 import './utils/array-helpers.js';
 import { notasService as service } from "./nota/service.js";
 import { takeUntil, debounceTime, partialize, pipe } from "./utils/operators.js";
+import { EventEmitter } from "./utils/event-emitter.js";
+import { Maybe } from "./utils/maybe.js";
+//-------- TEST
 
+const resultado = Maybe
+    .of(10)
+    .map(value => value + 10)
+    .map(value => value + 30)
+    //.get(); // retorna 50
+    .getOrElse(0) // retorna 0
+
+    console.log(resultado);
+    
+
+//const maybe = Maybe.of(10);
+//if(!maybe.isNothing()){}
+//const maybe2 = new Maybe(null);
+
+// export class Maybe {
+//     constructor(value){
+//         this._value = value;
+//     }
+//     static of(value){
+//         return new Maybe(value);
+//     }
+// }
+
+//--------
+//-------- TEST
+
+const textToArray = textM => textM.map(text => Array.from(text));
+const arrayToText = arrayM => arrayM.map(array => array.join(''));
+const transform = pipe(textToArray, arrayToText);
+const result = transform(Maybe.of('Cangaceiro'));
+alert(result.getOrElse(''));
+
+//-------- 
 const operations = pipe(
     partialize(takeUntil, 3),
     partialize(debounceTime, 500)
@@ -10,12 +46,10 @@ const operations = pipe(
 
 
 const action = operations(() => 
-    timeoutPromise(200, service.sumItems('2143'))
-    .then(delay(5000))
-    .then(log)
-    .catch(log)
+    retry(3, 3000, () => timeoutPromise(1000, service.sumItems('2143')))
+    .then(total => EventEmitter.emit('itensTotalizados', total))
+    .catch(log)           
 );
-
 
 document
     .querySelector('#myButton')
@@ -36,6 +70,7 @@ const promise2 = new Promise((resolve, reject) =>
 
 /*CODIGO REMOVIDO */
 /*
+//.then(log)
 //const operation2 = debounceTime(500, operation1);
 
 

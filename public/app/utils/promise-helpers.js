@@ -23,8 +23,10 @@ export const delay = milliseconds => data =>
         setTimeout(() => resolve(data), milliseconds)
 );
 
+
 export const retry = (retries, milliseconds, fn) =>
     fn().catch(err => {
         console.log(retries);
-        return retries > 1 ? retry(--retries, milliseconds, fn) : Promise.reject(err)
-    })
+        return delay(milliseconds)().then(() =>
+            retries > 1 ? retry(--retries, milliseconds, fn) : Promise.reject(err))
+    });
